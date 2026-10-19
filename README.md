@@ -17,7 +17,7 @@ open "https://manafe.$(heighliner show http-suffix)"
 ## Testing
 
 ```sh
-heighliner up              # the container holds a copy of the source
+heighliner up -av          # -a mounts the source: edits show on refresh
 heighliner login rspec     # browser specs, against a mock backend
 heighliner login ojtest    # unit tests
 heighliner login build     # the release build

@@ -6,7 +6,6 @@
 @import "Router.j"
 @import "SidebarController.j"
 @import "ProblemView.j"
-@import "TextFormat.j"
 
 var SIDEBAR_WIDTH = 260.0,
     HEADER_HEIGHT = 88.0,
@@ -348,11 +347,24 @@ var SIDEBAR_WIDTH = 260.0,
 
 - (void)problemView:(ProblemView)aView didChooseChoiceId:(CPString)aChoiceId
 {
+    [self _submitAnswer:{ choice: aChoiceId } fromView:aView wrongMessage:"Not quite. Try again."];
+}
+
+// The backend compares what the program printed with the expected output.
+- (void)problemView:(ProblemView)aView didSubmitOutput:(CPString)anOutput
+{
+    [self _submitAnswer:{ output: anOutput } fromView:aView
+           wrongMessage:"Not quite: your program ran, but did not print what the question asks for."];
+}
+
+- (void)_submitAnswer:(Object)anAnswer fromView:(ProblemView)aView wrongMessage:(CPString)aWrongMessage
+{
     var problemId = currentProblemId,
         round = [self round],
         path = "/courses/" + encodeURIComponent(courseId) + "/problems/" + encodeURIComponent(problemId) + "/answer";
 
-    [api post:path body:{ choice: aChoiceId, round: round } callback:function(status, body)
+    anAnswer.round = round;
+    [api post:path body:anAnswer callback:function(status, body)
     {
         if (status === 401)
             return [delegate courseControllerLostSession:self];
@@ -364,14 +376,15 @@ var SIDEBAR_WIDTH = 260.0,
             return;
 
         if (!body.correct)
-            return [aView showFeedback:"Not quite. Try again." correct:NO];
+            return [aView showFeedback:aWrongMessage correct:NO];
 
         var timesBefore = progress.times_completed;
         progress = body.progress;
         [self applyProgress];
         [aView setSolved:YES];
 
-        var message = "Correct! " + TextFormatReflow(body.explanation);
+        // ProblemView formats it, code and all.
+        var message = "Correct! " + (body.explanation || "");
         if (progress.times_completed > timesBefore)
             message += "\n\n" + (revisionMode ? "Revision complete! " : "Course complete! ") +
                        "You have completed this course " + progress.times_completed +

@@ -15,18 +15,25 @@ Passkeys.j           WebAuthn JSON <-> navigator.credentials. Pure logic apart f
 TopBar.j             Courses, My progress, and the account buttons.
 PageView.j           A page of headings, text, buttons, inputs and course cards, stacked top to bottom.
 CourseController.j   The course screen: revision switch, problem tree, problem.
+CodeEditor.j         The editor for code problems, and CodeBlockView for code in problem text:
+                     CodeMirror, loaded when first needed.
+CodeRunner.j         Runs a learner's program in a Web Worker (runtimes.md).
+CodeRun.j            Where a language's runtime is, and what to show for a run. Pure logic.
 CourseTree.j         The problem tree, what is solved in the round shown, and row labels. Pure logic.
 SidebarController.j  The CPOutlineView on the left of the course screen.
-ProblemView.j        A problem, its choices and the Check answer button.
-TextFormat.j         Reflows problem text from YAML for display. Pure logic.
+ProblemView.j        A problem, and its choices or its code editor, Run and Check answer.
+RichTextView.j       Problem text: prose in labels, code in highlighted read-only blocks.
+TextFormat.j         Splits problem text from YAML into prose and code, and reflows the prose. Pure logic.
 Chinofile            App metadata: name (the page title), identifier, author.
-Resources/           Static assets copied into the build.
+Resources/           Static assets copied into the build; runtimes/ holds the language runtimes,
+                     editors/ the bundled code editor.
+runtimes/, editors/  How to build those (runtimes.md). Not part of the app.
 tests/               Browser specs (tests/spec) and unit tests (tests/unit). See testing.md.
 scripts/             The rspec, ojtest and build wrappers, on PATH in the image.
 bin/rename           Renames the app (Chinofile name and identifier, smoke spec).
 ```
 
-"Pure logic" files touch no AppKit and no browser API, and have unit tests in `tests/unit/`. Keep logic there where you can: it is far cheaper to test than a view.
+"Pure logic" files (`AuthStore`, `Router`, `Passkeys`, `CourseTree`, `TextFormat`, `CodeRun`) touch no AppKit and no browser API, and have unit tests in `tests/unit/`. Keep logic there where you can: it is far cheaper to test than a view.
 
 ## Screens
 

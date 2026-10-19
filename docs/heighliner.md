@@ -6,7 +6,7 @@ heighliner runs the app container. It used to be called kaiser, and the `kaiser`
 
 - The environment is called `manafe` on the original machine, and the backend's `manabe`; Heighliner.config assumes the backend's name (below). On another machine, find a project's name with `heighliner init x`: in a project that is already initialised, it refuses, prints the existing name and changes nothing.
 - The app container is `<env>-app` and serves on port 4444. Through the proxy the app is at `https://<env>.<suffix>`, where `<suffix>` is whatever `heighliner show http-suffix` prints. The suffix differs between installs, so never assume one. Plain `http://` may redirect to `https://`.
-- The source is copied into the image, not bind-mounted. After you edit anything, run `heighliner up` to rebuild before testing in the container.
+- Start it with `heighliner up -av`. `-a` mounts the project over the copy of the source in the image (`attach_mount '.', '/app'`), so chino serves the files as they are on disk: refresh the browser to see an edit, and `heighliner login rspec` tests what is on disk. Plain `heighliner up` keeps the copy from the last build, and then every edit needs another `up`. Only `Gemfile`, `tests/Gemfile` and `Dockerfile` changes need a rebuild either way.
 - The SPA reaches the backend at `API_BASE_URL`, which Heighliner.config sets to `https://manabe.<suffix>/api/v1`. That assumes `../backend` was initialised as `heighliner init manabe`. Start the backend with its own `heighliner up` first.
 - `heighliner login <cmd>` runs a command inside `<env>-app`. `/app/scripts` is on PATH there, so `heighliner login rspec`, `heighliner login ojtest` and `heighliner login build` all work. When you call these from a script, redirect stdin from `/dev/null`.
 
@@ -24,7 +24,7 @@ The Dockerfile deliberately contains no ERB, because CI builds it with plain `do
 
 ## Running specs directly from the pi sandbox
 
-The sandbox is on the same docker network as heighliner, so you can run the specs without the app container. This is faster when iterating on uncommitted code, because the container only has the copy of the source from the last build.
+The sandbox is on the same docker network as heighliner, so you can run the specs without the app container. It also works when the container was started without `-a`, and so only has the copy of the source from its last build.
 
 ```sh
 bundle install

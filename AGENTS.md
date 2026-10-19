@@ -4,7 +4,7 @@ Read [docs/README.md](docs/README.md) before changing anything, and [docs/system
 
 The things most likely to bite:
 
-- The container holds a copy of the source: `heighliner up` after every change before testing there. Or run the tests from the sandbox (docs/heighliner.md).
+- Start the container with `heighliner up -av`, which mounts the source, so a refresh shows an edit. Plain `heighliner up` serves a copy from the last build (docs/heighliner.md).
 - Navigate by setting the URL hash and let the router build the screen; never both set the hash and route (docs/architecture.md).
 - After an asynchronous callback, flush the run loop, or AppKit does not redraw (docs/cappuccino.md).
 - Never retry a rejected session more than once: an unbounded retry once created 54,000 learners.

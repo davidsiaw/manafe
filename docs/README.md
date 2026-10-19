@@ -8,6 +8,7 @@ Notes for whoever works on this repository next, human or agent. Read [system.md
 | [architecture.md](architecture.md) | You are changing code. Files, screens and routing, startup, configuration, the dev image. |
 | [accounts.md](accounts.md) | You are working on sessions, registration, login, logout or passkeys. |
 | [course-screen.md](course-screen.md) | You are working on the course screen: the problem tree, problems, answering, revision mode. |
+| [runtimes.md](runtimes.md) | You are working on code problems: running programs in the browser, the mruby runtime, adding a language. |
 | [cappuccino.md](cappuccino.md) | You are writing views. AppKit behaviour that has surprised us. |
 | [chino.md](chino.md) | You are touching the dev server, `chino build` or `.j.erb` files. |
 | [testing.md](testing.md) | You are writing or running specs and unit tests. |

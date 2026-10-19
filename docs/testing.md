@@ -50,8 +50,11 @@ Running them from the pi sandbox, without rebuilding, is described in heighliner
 - `choose_cappuccino_radio(title)` and `cappuccino_selected_radio_titles`.
 - `cappuccino_outline_rows` and `wait_for_cappuccino_outline_row(text)` read the visible rows of an outline view as its data source renders them.
 - `fill_cappuccino_field(placeholder, value)` types into the editable field with that placeholder.
+- `fill_cappuccino_code(code)` and `cappuccino_code` set and read the program in the code editor. `cappuccino_code_blocks` reads the code blocks in problem text. `paste_cappuccino_output(text)` fills the box where a local problem's output is pasted. `click_cappuccino_code_editor` clicks into the code editor (a real click on CodeMirror's DOM, which Capybara handles fine), for typing real keys with `page.driver.browser.action.send_keys`. Never wrap Selenium calls in `Timeout.timeout`: an interrupted command leaves the session broken and the following examples fail in `reset!`.
 
-Add new helpers to that file, built on `VIEW_WALK_JS`, rather than writing JavaScript in specs.
+`tests/spec/code_spec.rb` runs real programs on the real runtime from `Resources/runtimes/`; only the backend is mocked. One of its examples waits for the five-second timeout.
+
+Add new helpers to that file, built on `VIEW_WALK_JS`, rather than writing JavaScript in specs. To test whether a view is visible use `cappIsShown(v)` from `VIEW_WALK_JS`, not `isHiddenOrHasHiddenAncestor`, which can be wrong (cappuccino.md).
 
 ## Browser specs: gotchas
 
@@ -62,7 +65,7 @@ Add new helpers to that file, built on `VIEW_WALK_JS`, rather than writing JavaS
 
 ## Unit tests
 
-Unit tests in `tests/unit/` cover the pure-logic files (`Router`, `AuthStore`, `Passkeys`, `CourseTree`, `TextFormat`). They run in Node with the Objective-J runtime and Foundation: no DOM, no AppKit, no `XMLHttpRequest`. `SanityTest.j` is a canary for the toolchain. Node has `atob`/`btoa`, which `Passkeys.j` uses.
+Unit tests in `tests/unit/` cover the pure-logic files (`Router`, `AuthStore`, `Passkeys`, `CourseTree`, `TextFormat`, `CodeRun`). They run in Node with the Objective-J runtime and Foundation: no DOM, no AppKit, no `XMLHttpRequest`. `SanityTest.j` is a canary for the toolchain. Node has `atob`/`btoa`, which `Passkeys.j` uses.
 
 | Belongs in tests/unit | Belongs in tests/spec |
 |---|---|

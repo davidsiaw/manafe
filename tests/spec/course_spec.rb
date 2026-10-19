@@ -53,6 +53,24 @@ RSpec.describe 'Taking a course', type: :feature do
     end
   end
 
+  context 'with code in the problem text' do
+    before do
+      stub_course
+      MOCK_API.stub('GET', '/courses/sample/problems/one',
+                    body: problem('one', 'Problem one').merge(
+                      language: 'rust', body: "Shadowing:\n\n  let x = 5;\n  let x = x + 1;\n\nThat is all."
+                    ))
+      visit_as_anonymous('/#/courses/sample/one')
+      wait_for_cappuccino_text('Question about one?')
+    end
+
+    it 'shows it in a highlighted block, between the prose' do
+      expect(cappuccino_code_blocks).to eq ["let x = 5;\nlet x = x + 1;"]
+      expect(cappuccino_text_values).to include('Shadowing:', 'That is all.')
+      expect(page).to have_css('.cm-editor .cm-content[contenteditable="false"]', wait: 15)
+    end
+  end
+
   context 'when answering' do
     before do
       stub_course

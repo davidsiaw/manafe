@@ -23,6 +23,13 @@ module CappuccinoHelper
     function cappIsKind(view, className) {
       return objj_msgSend(view, "isKindOfClass:", objj_getClass(className));
     }
+    // Not isHiddenOrHasHiddenAncestor: AppKit clears that on a hidden view
+    // when an ancestor is shown again (docs/cappuccino.md).
+    function cappIsShown(view) {
+      for (var v = view; v; v = objj_msgSend(v, "superview"))
+        if (objj_msgSend(v, "isHidden")) return false;
+      return true;
+    }
   JS
 
   def wait_for_cappuccino(wait: Capybara.default_max_wait_time)
@@ -62,7 +69,7 @@ module CappuccinoHelper
         return cappViews(function(v) {
           return cappIsKind(v, "CPButton") &&
                  objj_msgSend(v, "title") == wanted &&
-                 !objj_msgSend(v, "isHiddenOrHasHiddenAncestor");
+                 cappIsShown(v);
         }).length > 0;
       })(arguments[0]);
     JS
@@ -168,6 +175,72 @@ module CappuccinoHelper
       })(arguments[0], arguments[1]);
     JS
     raise "fill_cappuccino_field(#{placeholder.inspect}): #{result}" unless result == 'ok'
+  end
+
+  # Replaces the program in the visible code editor (CodeEditor.j), as a
+  # problem in Ruby, which is what the specs use.
+  def fill_cappuccino_code(code)
+    result = page.execute_script(<<~JS, code)
+      return (function(code) {
+        #{VIEW_WALK_JS}
+        var editors = cappViews(function(v) {
+          return cappIsKind(v, "CodeEditor") && !objj_msgSend(v, "isPlain") &&
+                 cappIsShown(v);
+        });
+        if (editors.length == 0) return "no visible CodeEditor";
+        objj_msgSend(editors[0], "setCode:language:", code, "ruby");
+        return "ok";
+      })(arguments[0]);
+    JS
+    raise "fill_cappuccino_code: #{result}" unless result == 'ok'
+  end
+
+  # Types into the box where a local code problem's output is pasted.
+  def paste_cappuccino_output(text)
+    result = page.execute_script(<<~JS, text)
+      return (function(text) {
+        #{VIEW_WALK_JS}
+        var boxes = cappViews(function(v) {
+          return cappIsKind(v, "CodeEditor") && objj_msgSend(v, "isPlain") &&
+                 cappIsShown(v);
+        });
+        if (boxes.length == 0) return "no visible output box";
+        objj_msgSend(boxes[0], "setCode:language:", text, null);
+        return "ok";
+      })(arguments[0]);
+    JS
+    raise "paste_cappuccino_output: #{result}" unless result == 'ok'
+  end
+
+  # The code of every visible code block in problem text (CodeBlockView).
+  def cappuccino_code_blocks
+    page.evaluate_script(<<~JS)
+      (function() {
+        #{VIEW_WALK_JS}
+        return cappViews(function(v) { return cappIsKind(v, "CodeBlockView") && cappIsShown(v); })
+          .map(function(v) { return String(objj_msgSend(v, "code")); });
+      })();
+    JS
+  end
+
+  # The program in the visible code editor, or nil without one.
+  def cappuccino_code
+    page.evaluate_script(<<~JS)
+      (function() {
+        #{VIEW_WALK_JS}
+        var editors = cappViews(function(v) {
+          return cappIsKind(v, "CodeEditor") && !objj_msgSend(v, "isPlain") &&
+                 cappIsShown(v);
+        });
+        return editors.length ? String(objj_msgSend(editors[0], "code")) : null;
+      })();
+    JS
+  end
+
+  # Clicks into the visible code editor, for typing with real key presses
+  # (page.driver.browser.action.send_keys). Waits for the editor to load.
+  def click_cappuccino_code_editor
+    first('.cm-content', visible: true).click
   end
 
   def cappuccino_main_menu_titles

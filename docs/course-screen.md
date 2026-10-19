@@ -22,9 +22,34 @@ A problem is fetched when it is shown (`GET .../problems/<pid>`, with `?round=N`
 
 `ProblemView` stacks, top to bottom: the title (green with a ✓ when solved in this round), previous and next buttons (titled with those problems' names), the body, the question, a radio button per choice, "Check answer", and feedback. It lays itself out in `-layoutSubviews`, measures wrapped text with `sizeWithFont:inWidth:`, keeps text at most 760 pixels wide, and grows so that its scroll view can scroll.
 
-Problem text is plain, written in YAML with line breaks wherever the author wrapped. `TextFormatReflow` joins the lines of a paragraph, and keeps lines that are indented (code) or start a list item on their own. The explanation after a correct answer is reflowed the same way.
+Problem text is plain, written in YAML with line breaks wherever the author wrapped. `TextFormatBlocks` (TextFormat.j) splits it into prose and code:
 
-Answering posts `{choice, round}`. A correct answer returns the new progress, which redraws the tree and the header. When the answer completes the round, the feedback adds "Course complete!" or "Revision complete!" and the number of times completed.
+- Prose: the lines of a paragraph are joined. A line starting a list item (`- `, `* `, `1. `) keeps its own line, and indented lines after it, indented no deeper than the item's text, continue it.
+- Code: any other indented line. Neighbouring code lines, and code paragraphs separated only by blank lines, make one block, with their common indentation removed.
+
+`RichTextView` shows the prose in labels and each code block in a `CodeBlockView`: CodeMirror, read-only, highlighted as the problem's `language` (for multiple choice, the course's), selectable and copyable, and as tall as its content. Until the editor script has loaded, a block shows the code plain in the same font and line height, so nothing moves when it is replaced. The body, the question and the feedback (with the explanation after a correct answer) are all `RichTextView`s; `CourseController` passes the explanation unformatted.
+
+The wheel is not stopped over a code block, unlike over an editor, so the page scrolls with the pointer on one.
+
+Answering a multiple choice question posts `{choice, round}`. A correct answer returns the new progress, which redraws the tree and the header. When the answer completes the round, the feedback adds "Course complete!" or "Revision complete!" and the number of times completed.
+
+## Code problems
+
+For `type: "code"`, `ProblemView` shows a `CodeEditor` holding the problem's `starter_code` instead of radio buttons, then **Run** and **Check answer**, then the output in a grey box. How programs run is in runtimes.md.
+
+- **Run** runs the program and shows what it printed, and any error. Nothing is sent to the backend.
+- **Check answer** runs it too, and if it ran to the end posts `{output, round}` with its stdout. A program that failed is not sent: the learner is told to fix the error. A timeout is shown as such.
+- While a program runs, both buttons are disabled. Showing another problem abandons the run.
+- The question is reflowed like the body, so an indented line in it (the exact text to print) keeps its own line.
+- What the learner typed is lost when they go to another problem or reload; the editor starts from `starter_code` each time.
+
+### Run on the learner's computer
+
+A code problem with `run: "local"` is for a language the browser cannot run (Rust). There is no Run button: the code is shown to read, with **Copy code** (the clipboard API; if the browser refuses, the learner is told to select and copy it), then a box headed "What your program printed:" for the output pasted back, then **Check answer**, which posts `{output, round}` with what was pasted. The code editor is only as tall as the code, up to the usual height. The paste box is a plain `CodeEditor` (`-initWithFrame:plain:`): no line numbers or highlighting.
+
+Learners may paste a whole terminal; the backend leaves out what Cargo printed before the program's output.
+
+The editor is CodeMirror 6 (runtimes.md): Ruby highlighting, line numbers, bracket matching and closing, undo, and indentation as you type (Return indents inside a block, typing `end` takes it back out). Tab indents; Escape then Tab leaves the editor, which is CodeMirror's way of not trapping keyboard users.
 
 ## Revision mode
 
