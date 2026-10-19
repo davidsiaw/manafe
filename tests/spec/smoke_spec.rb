@@ -2,21 +2,16 @@
 
 require 'spec_helper'
 
-RSpec.describe 'ChinoBase smoke', type: :feature do
+RSpec.describe 'Manabase smoke', type: :feature do
   before { visit '/' }
 
   it 'serves the SPA shell' do
-    expect(page).to have_title('ChinoBase')
+    expect(page).to have_title('Manabase')
   end
 
-  it 'boots Cappuccino and renders the Hello World label' do
+  it 'boots Cappuccino and says so when the backend is unreachable' do
     wait_for_cappuccino
-    wait_for_cappuccino_text('Hello World!')
-  end
-
-  it 'shows the standard menu bar' do
-    wait_for_cappuccino
-    expect(cappuccino_menu_bar_visible?).to be(true)
-    expect(cappuccino_main_menu_titles).not_to be_empty
+    # No stubs are queued, so the mock API answers 599.
+    wait_for_cappuccino_text('Could not reach the server (599).')
   end
 end

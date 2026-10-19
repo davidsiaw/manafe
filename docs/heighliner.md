@@ -4,9 +4,10 @@ heighliner runs the app container. It used to be called kaiser, and the `kaiser`
 
 ## This project
 
-- The environment name is whatever the user passed to `heighliner init <env>`, so do not assume one. To find it, run `heighliner init x`. In a project that is already initialised, the command refuses, prints the existing name and changes nothing.
+- The environment is called `manafe` on the original machine, and the backend's `manabe`; Heighliner.config assumes the backend's name (below). On another machine, find a project's name with `heighliner init x`: in a project that is already initialised, it refuses, prints the existing name and changes nothing.
 - The app container is `<env>-app` and serves on port 4444. Through the proxy the app is at `https://<env>.<suffix>`, where `<suffix>` is whatever `heighliner show http-suffix` prints. The suffix differs between installs, so never assume one. Plain `http://` may redirect to `https://`.
 - The source is copied into the image, not bind-mounted. After you edit anything, run `heighliner up` to rebuild before testing in the container.
+- The SPA reaches the backend at `API_BASE_URL`, which Heighliner.config sets to `https://manabe.<suffix>/api/v1`. That assumes `../backend` was initialised as `heighliner init manabe`. Start the backend with its own `heighliner up` first.
 - `heighliner login <cmd>` runs a command inside `<env>-app`. `/app/scripts` is on PATH there, so `heighliner login rspec`, `heighliner login ojtest` and `heighliner login build` all work. When you call these from a script, redirect stdin from `/dev/null`.
 
 ## Heighliner.config is an ERB template
@@ -32,7 +33,7 @@ CHROME_HOSTNAME=$(for h in heighliner-chrome kaiser-chrome; do getent hosts $h >
 TEST_HOST=$(hostname -I | awk '{print $1}') CHROME_HOSTNAME=$CHROME_HOSTNAME scripts/rspec
 ```
 
-`scripts/rspec` starts chino in the sandbox if nothing is listening on port 4444. `TEST_HOST` must be an address the chrome container can reach. The sandbox's hostname is not in heighliner's DNS, but its IP address is reachable.
+The specs serve the app from the spec process on port 4445 (see testing.md), so nothing else needs to be running. The sandbox's IP address works as `TEST_HOST` even for the passkey specs, because chrome reaches the app as `manabase-test`, mapped to that address. `TEST_HOST` must be an address the chrome container can reach. The sandbox's hostname is not in heighliner's DNS, but its IP address is reachable.
 
 To run ojtest in the sandbox, run `npm install --prefix /tmp/capp @objj/cappuccino` and add `/tmp/capp/node_modules/.bin` to PATH.
 

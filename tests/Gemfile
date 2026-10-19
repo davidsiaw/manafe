@@ -5,3 +5,8 @@ source 'https://rubygems.org'
 gem 'capybara', '~> 3.40'
 gem 'rspec', '~> 3.13'
 gem 'selenium-webdriver', '~> 4.20'
+
+# The specs serve the app themselves, next to a mock API (see spec_helper.rb),
+# so they need chino's Sinatra app and a server for Capybara to run it on.
+gem 'chino', '~> 0.3.3'
+gem 'puma'

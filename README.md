@@ -1,45 +1,28 @@
-# chino-base
+# Manabase frontend
 
-This repository is a starting point for new [chino](https://github.com/davidsiaw/chino) apps. It contains a small Cappuccino app, a test suite and CI.
+The app students use in Manabase, a base system for interactive learning modules: a course menu, courses shown as a collapsible problem tree with a problem beside it, multiple choice exercises, passkey accounts, a personal progress page, and revision mode for going through a course again. Everything it shows comes from the backend repository, normally checked out next to this one.
 
-## Starting a new app
+A [Cappuccino](https://www.cappuccino.dev) (Objective-J) single-page app, served and built by [chino](https://github.com/davidsiaw/chino), and started from the chino-base template.
 
-Clone the repository and give the app a name:
+## Running it
 
-```sh
-bin/rename MyApp
-```
-
-This changes the name in the `Chinofile` and in the smoke spec. You can then edit the other values in the `Chinofile`, such as the author and the company name.
-
-## Running the app
-
-The app runs in a container managed by heighliner. The first time, choose a name for the environment and initialise it:
+Start the backend first (`../backend`), then:
 
 ```sh
-heighliner init myapp
-```
-
-After that, start the app with the following command:
-
-```sh
+heighliner init manafe     # once
 heighliner up
+open "https://manafe.$(heighliner show http-suffix)"
 ```
 
-The app is served on port 4444.
-
-## Running the tests
-
-The tests run inside the app container. Run `heighliner up` first, so that the container has your latest changes.
+## Testing
 
 ```sh
-heighliner login rspec
-heighliner login ojtest
-heighliner login build
+heighliner up              # the container holds a copy of the source
+heighliner login rspec     # browser specs, against a mock backend
+heighliner login ojtest    # unit tests
+heighliner login build     # the release build
 ```
 
-The first command runs the browser specs, the second runs the unit tests, and the third checks that the release build succeeds.
+## Documentation
 
-## Further reading
-
-More detailed notes are in the [docs](docs/README.md) folder.
+How the app is built, how it talks to the backend, accounts and passkeys, the course screen and revision mode, Cappuccino pitfalls, and testing: [docs/](docs/README.md). Start with [docs/system.md](docs/system.md).

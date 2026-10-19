@@ -1,7 +1,7 @@
-name "ChinoBase"
+name "Manabase"
 version "0.0.1"
 author "YourName"
 author_email "your_name@example.com"
 company_name "YourCompany"
-identifier "com.yourcompany.chinobase"
+identifier "com.yourcompany.manabase"
 created_at DateTime.new(2026, 10, 13)

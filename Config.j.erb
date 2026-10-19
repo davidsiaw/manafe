@@ -1,0 +1,4 @@
+// Rendered by chino with ERB when served and when built, so these values come
+// from the environment of the chino process. See docs/project.md.
+<% require 'json' %>
+API_BASE_URL = <%= ENV.fetch('API_BASE_URL', 'http://localhost:3000/api/v1').to_json %>;

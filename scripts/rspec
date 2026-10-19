@@ -1,31 +1,13 @@
 #!/bin/bash
+#
+# Runs the browser specs. The specs serve the app themselves, together with a
+# mock backend (tests/spec_helper.rb), so no chino needs to be running.
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
 : "${CHROME_HOSTNAME:?CHROME_HOSTNAME must be set (Selenium Grid host)}"
 : "${TEST_HOST:?TEST_HOST must be set (this host, as seen from chrome)}"
-
-CHINO_LOG=/tmp/chino.log
-log() { echo "[rspec $(date '+%H:%M:%S')] $*"; }
-up() { curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:4444/; }
-
-if up; then
-  log 'reusing chino already on :4444'
-else
-  log "starting chino on :4444 (log: $CHINO_LOG)"
-  BUNDLE_GEMFILE="$PWD/Gemfile" bundle exec chino > "$CHINO_LOG" 2>&1 &
-  CHINO_PID=$!
-  trap 'kill -TERM $CHINO_PID 2>/dev/null; wait $CHINO_PID 2>/dev/null; true' EXIT
-  for _ in $(seq 1 60); do
-    up && break
-    if ! kill -0 $CHINO_PID 2>/dev/null; then
-      log 'chino exited before serving:'; cat "$CHINO_LOG"; exit 1
-    fi
-    sleep 1
-  done
-  up || { log 'chino never came up on :4444 within 60s:'; cat "$CHINO_LOG"; exit 1; }
-fi
 
 export BUNDLE_GEMFILE="$PWD/tests/Gemfile"
 bundle check > /dev/null 2>&1 || bundle install

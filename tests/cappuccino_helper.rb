@@ -92,6 +92,84 @@ module CappuccinoHelper
     raise "click_cappuccino_button(#{title.inspect}): #{result}" unless result == 'ok'
   end
 
+  # Clicks the CPRadio with this title, as a user would; its radio group then
+  # turns the others off.
+  def choose_cappuccino_radio(title)
+    result = page.execute_script(<<~JS, title)
+      return (function(wanted) {
+        #{VIEW_WALK_JS}
+        var radios = cappViews(function(v) {
+          return cappIsKind(v, "CPRadio") && objj_msgSend(v, "title") == wanted;
+        });
+        if (radios.length == 0) return "no CPRadio titled '" + wanted + "'";
+        objj_msgSend(radios[0], "performClick:", null);
+        return "ok";
+      })(arguments[0]);
+    JS
+    raise "choose_cappuccino_radio(#{title.inspect}): #{result}" unless result == 'ok'
+  end
+
+  def cappuccino_selected_radio_titles
+    page.evaluate_script(<<~JS)
+      (function() {
+        #{VIEW_WALK_JS}
+        return cappViews(function(v) {
+          return cappIsKind(v, "CPRadio") && objj_msgSend(v, "state") == 1;
+        }).map(function(v) { return String(objj_msgSend(v, "title")); });
+      })();
+    JS
+  end
+
+  # The text of every visible row of every CPOutlineView, top to bottom, as
+  # its data source supplies it. Collapsed children are not rows.
+  def cappuccino_outline_rows
+    page.evaluate_script(<<~JS)
+      (function() {
+        #{VIEW_WALK_JS}
+        var out = [];
+        cappViews(function(v) { return cappIsKind(v, "CPOutlineView"); }).forEach(function(ov) {
+          var ds = objj_msgSend(ov, "dataSource"),
+              column = objj_msgSend(objj_msgSend(ov, "tableColumns"), "objectAtIndex:", 0);
+          for (var i = 0; i < objj_msgSend(ov, "numberOfRows"); i++) {
+            var item = objj_msgSend(ov, "itemAtRow:", i);
+            out.push(String(objj_msgSend(ds, "outlineView:objectValueForTableColumn:byItem:", ov, column, item)));
+          }
+        });
+        return out;
+      })();
+    JS
+  end
+
+  def wait_for_cappuccino_outline_row(text, wait: Capybara.default_max_wait_time)
+    poll("wait_for_cappuccino_outline_row(#{text.inspect})", wait) do
+      cappuccino_outline_rows.include?(text)
+    end
+  end
+
+  # Waits until the text appears in any CPTextField, matching a substring.
+  def wait_for_cappuccino_text_including(text, wait: Capybara.default_max_wait_time)
+    poll("wait_for_cappuccino_text_including(#{text.inspect})", wait) do
+      cappuccino_text_values.any? { |value| value.include?(text) }
+    end
+  end
+
+  # Types into the editable CPTextField showing this placeholder.
+  def fill_cappuccino_field(placeholder, value)
+    result = page.execute_script(<<~JS, placeholder, value)
+      return (function(wanted, value) {
+        #{VIEW_WALK_JS}
+        var fields = cappViews(function(v) {
+          return cappIsKind(v, "CPTextField") && objj_msgSend(v, "isEditable") &&
+                 objj_msgSend(v, "placeholderString") == wanted;
+        });
+        if (fields.length == 0) return "no editable CPTextField with placeholder '" + wanted + "'";
+        objj_msgSend(fields[0], "setStringValue:", value);
+        return "ok";
+      })(arguments[0], arguments[1]);
+    JS
+    raise "fill_cappuccino_field(#{placeholder.inspect}): #{result}" unless result == 'ok'
+  end
+
   def cappuccino_main_menu_titles
     page.evaluate_script(<<~JS)
       (function() {
