@@ -1,0 +1,9 @@
+{
+  "name": "manabase-zig-runtime",
+  "private": true,
+  "description": "Bundles the Zig runtime's worker with the WASI shim. Run ./build.",
+  "dependencies": {
+    "@bjorn3/browser_wasi_shim": "0.4.2",
+    "esbuild": "0.28.2"
+  }
+}

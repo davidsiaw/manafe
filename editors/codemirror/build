@@ -17,7 +17,7 @@ work=${WORK_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/manabase-codemirror}
 out=$root/Resources/editors/codemirror
 mkdir -p "$work" "$out"
 
-cp "$here/package.json" "$here/editor.js" "$work/"
+cp "$here/package.json" "$here"/*.js "$work/"
 if [ -f "$here/package-lock.json" ]; then
   cp "$here/package-lock.json" "$work/"
   (cd "$work" && npm ci --no-audit --no-fund)

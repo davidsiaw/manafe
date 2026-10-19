@@ -31,6 +31,24 @@ jobs:
           cache-from: type=gha,scope=chino-dev
           cache-to: type=gha,scope=chino-dev,mode=max
 
+      - name: Cache the Zig runtime's downloads and build
+        uses: actions/cache@v4
+        with:
+          path: .zig-build
+          key: zig-runtime-${{ hashFiles('runtimes/zig/**') }}
+          restore-keys: zig-runtime-
+
+      # Resources/runtimes/zig is not committed; build it into the checkout.
+      - name: Build the Zig runtime
+        run: |
+          docker run --rm \
+            -v "$PWD:/app" \
+            -e HOME=/tmp \
+            -e WORK_DIR=/app/.zig-build \
+            -u "$(id -u)" \
+            --entrypoint=/app/runtimes/zig/build \
+            chino-dev
+
       - name: chino build
         run: |
           docker run --rm \

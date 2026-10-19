@@ -3,6 +3,12 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
+# The Zig runtime is built, not committed (runtimes/zig/build).
+if [ ! -f Resources/runtimes/zig/zig.wasm ]; then
+  echo "build: the Zig runtime is not built; run runtimes/zig/build first" >&2
+  exit 1
+fi
+
 # chino compiles every .j file except under hidden paths, and tests/unit
 # would break the build, so hide tests/ until the script exits.
 STASH=".tests-stashed-by-build"

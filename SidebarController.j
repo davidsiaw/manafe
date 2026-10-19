@@ -57,24 +57,29 @@
 // After progress changed: redraw the rows, keeping what is open.
 - (void)refresh
 {
+    _selectingProgrammatically = YES;
     var row = [outlineView selectedRow];
     [outlineView reloadData];
-    _selectingProgrammatically = YES;
     if (row >= 0)
         [outlineView selectRowIndexes:[CPIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
     _selectingProgrammatically = NO;
 }
 
+/*
+    All of it is guarded, not just the selection: opening a section above
+    the selected row moves the selection, and CPOutlineView reports that as
+    a change, which would otherwise navigate back to the old problem.
+*/
 - (void)selectProblemId:(CPString)anId
 {
     var node = [tree nodeForProblemId:anId],
         ancestors = [tree ancestorsOfNode:node];
 
+    _selectingProgrammatically = YES;
     for (var i = 0; i < ancestors.length; i++)
         [outlineView expandItem:ancestors[i]];
 
     var row = [outlineView rowForItem:node];
-    _selectingProgrammatically = YES;
     [outlineView selectRowIndexes:[CPIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
     _selectingProgrammatically = NO;
     [outlineView scrollRowToVisible:row];
@@ -110,14 +115,17 @@
 
 - (BOOL)outlineView:(CPOutlineView)anOutlineView shouldSelectItem:(id)anItem
 {
-    // Clicking a section opens or closes it instead of selecting it.
+    // Clicking a section opens or closes it instead of selecting it. That
+    // moves the selected row too, which is not the learner choosing it.
     if ([anItem isProblem])
         return YES;
 
+    _selectingProgrammatically = YES;
     if ([anOutlineView isItemExpanded:anItem])
         [anOutlineView collapseItem:anItem];
     else
         [anOutlineView expandItem:anItem];
+    _selectingProgrammatically = NO;
     return NO;
 }
 

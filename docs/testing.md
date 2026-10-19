@@ -4,12 +4,12 @@ There are two test suites and a build check. Each has a wrapper in `scripts/`, a
 
 | Suite | Wrapper | What it tests | What it needs |
 |---|---|---|---|
-| Capybara/Selenium | `scripts/rspec [files] [rspec args]` | The real SPA in a real Chromium, against a mock backend | A Selenium Grid |
+| Capybara/Selenium | `scripts/rspec [files] [rspec args]` | The real SPA in a real Chromium, against a mock backend | A Selenium Grid, and the Zig runtime built (`runtimes/zig/build`) |
 | OJTest | `scripts/ojtest [files]` | Pure-logic Objective-J, run in Node | `ojtest` from the npm package `@objj/cappuccino` |
-| Build check | `scripts/build` | That `chino build` succeeds | `jake` from the same npm package |
+| Build check | `scripts/build` | That `chino build` succeeds | `jake` from the same npm package, and the Zig runtime built |
 
 ```sh
-heighliner up                       # the container holds a copy of the source, so rebuild first
+heighliner up -av                   # -a mounts the source, so the tests see your edits
 heighliner login rspec
 heighliner login rspec tests/spec/course_spec.rb -e 'ticks the problem'
 heighliner login ojtest
@@ -52,7 +52,7 @@ Running them from the pi sandbox, without rebuilding, is described in heighliner
 - `fill_cappuccino_field(placeholder, value)` types into the editable field with that placeholder.
 - `fill_cappuccino_code(code)` and `cappuccino_code` set and read the program in the code editor. `cappuccino_code_blocks` reads the code blocks in problem text. `paste_cappuccino_output(text)` fills the box where a local problem's output is pasted. `click_cappuccino_code_editor` clicks into the code editor (a real click on CodeMirror's DOM, which Capybara handles fine), for typing real keys with `page.driver.browser.action.send_keys`. Never wrap Selenium calls in `Timeout.timeout`: an interrupted command leaves the session broken and the following examples fail in `reset!`.
 
-`tests/spec/code_spec.rb` runs real programs on the real runtime from `Resources/runtimes/`; only the backend is mocked. One of its examples waits for the five-second timeout.
+`tests/spec/code_spec.rb` and `tests/spec/zig_spec.rb` run real programs on the real runtimes from `Resources/runtimes/` (mruby, and the Zig compiler); only the backend is mocked. One example waits for the five-second timeout, and the first Zig example downloads and starts the compiler. The shared chrome is version 94, from 2021, so runtimes must not use newer WebAssembly features (runtimes.md, Zig).
 
 Add new helpers to that file, built on `VIEW_WALK_JS`, rather than writing JavaScript in specs. To test whether a view is visible use `cappIsShown(v)` from `VIEW_WALK_JS`, not `isHiddenOrHasHiddenAncestor`, which can be wrong (cappuccino.md).
 

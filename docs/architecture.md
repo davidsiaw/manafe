@@ -27,7 +27,8 @@ TextFormat.j         Splits problem text from YAML into prose and code, and refl
 Chinofile            App metadata: name (the page title), identifier, author.
 Resources/           Static assets copied into the build; runtimes/ holds the language runtimes,
                      editors/ the bundled code editor.
-runtimes/, editors/  How to build those (runtimes.md). Not part of the app.
+runtimes/, editors/  How to build those (runtimes.md): runtimes/mruby, runtimes/zig, editors/codemirror.
+                     Not part of the app.
 tests/               Browser specs (tests/spec) and unit tests (tests/unit). See testing.md.
 scripts/             The rspec, ojtest and build wrappers, on PATH in the image.
 bin/rename           Renames the app (Chinofile name and identifier, smoke spec).

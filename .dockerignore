@@ -1,7 +1,25 @@
+# Docker matches these from the build context's root; **/ reaches nested ones.
+
 .git
+
+# Build outputs, rebuilt in the container (scripts/build, scripts/static-site)
 build
+site
 temp
-vendor
-.bundle
+.tests-stashed-by-build
+
+# CI's download and build cache for the Zig runtime (hundreds of MB). The
+# runtime itself, Resources/runtimes/zig, is copied in on purpose: plain
+# `heighliner up` serves the image's copy of the source.
+.zig-build
+
+# Bundler and npm: the image installs its own
+**/.bundle
+**/vendor
+**/node_modules
+
+# Agent sessions and indexes
 .pi-sessions
 .pirag
+
+**/.DS_Store

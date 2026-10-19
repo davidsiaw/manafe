@@ -1,0 +1,110 @@
+#!/bin/bash
+# Builds the Zig runtime: the Zig compiler itself built for WebAssembly
+# (wasm32-wasi), its standard library as a tarball, compiler_rt built
+# natively, and the worker bundled with the WASI shim. Writes them to
+# Resources/runtimes/zig/, which is not committed (8.5 MB): run this after
+# cloning, and in CI. See docs/runtimes.md.
+#
+#   runtimes/zig/build              # from the repository root
+#   runtimes/zig/build --force      # rebuild even if up to date
+#
+# Needs curl, tar with xz, sha256sum (or shasum), Node and npm. Downloads
+# the pinned Zig release for this machine and its source, and checks both.
+# Does nothing when Resources/runtimes/zig/ is already built from the same
+# inputs; the first build takes about a minute.
+set -euo pipefail
+
+ZIG_VERSION=0.17.0
+ZIG_SOURCE_SHA256=b6c7f1728f043700d6529bac980800792f824256a9d2f1839b3d62beed0b8abd
+# WebAssembly features every current browser has had since about 2021. Zig's
+# default for wasm32 also uses reference types (Chrome 96, 2021-11), which
+# the shared Selenium Chrome (94) and older Safari cannot load. The worker
+# compiles programs with the same set (CPU in worker.js).
+CPU=mvp+bulk_memory+sign_ext+nontrapping_fptoint+mutable_globals+multivalue
+
+here=$(cd "$(dirname "$0")" && pwd)
+root=$(cd "$here/../.." && pwd)
+# Outside the repository: chino compiles every .j file in the tree, and the
+# Docker image copies all of it.
+work=${WORK_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/manabase-zig}
+out=$root/Resources/runtimes/zig
+
+# What the outputs are built from. When it matches the stamp of the last
+# build, there is nothing to do.
+inputs=$(cat "$here/build" "$here/worker.js" "$here/package.json" "$here/package-lock.json" 2>/dev/null | cksum)
+if [ "${1:-}" != "--force" ] && [ -f "$out/zig.wasm" ] && [ "$(cat "$out/.stamp" 2>/dev/null)" = "$inputs" ]; then
+  echo "runtimes/zig/build: up to date"
+  exit 0
+fi
+
+mkdir -p "$work" "$out"
+cd "$work"
+# Zig's own build cache, inside the work directory, so that CI can cache
+# both together and a rebuild after changing only the worker is quick.
+export ZIG_GLOBAL_CACHE_DIR="$work/zig-cache"
+
+sha256() { if command -v sha256sum >/dev/null; then sha256sum "$1"; else shasum -a 256 "$1"; fi | cut -d' ' -f1; }
+
+fetch() {   # url, file, expected sha256
+  if [ ! -f "$2" ]; then
+    curl --proto '=https' --tlsv1.2 -sSfL "$1" -o "$2.part"
+    mv "$2.part" "$2"
+  fi
+  if [ "$(sha256 "$2")" != "$3" ]; then
+    echo "build: $2 does not match its checksum" >&2
+    rm -f "$2"
+    exit 1
+  fi
+}
+
+case "$(uname -s)-$(uname -m)" in
+  Linux-x86_64) host=x86_64-linux ;;
+  Linux-aarch64 | Linux-arm64) host=aarch64-linux ;;
+  Darwin-x86_64) host=x86_64-macos ;;
+  Darwin-arm64) host=aarch64-macos ;;
+  *) echo "build: no Zig release for $(uname -s) $(uname -m)" >&2; exit 1 ;;
+esac
+
+# The host compiler's checksum comes from ziglang.org's release index.
+curl --proto '=https' --tlsv1.2 -sSf https://ziglang.org/download/index.json -o index.json
+host_sha=$(node -e 'const i = require("./index.json"); console.log(i[process.argv[1]][process.argv[2]].shasum)' "$ZIG_VERSION" "$host")
+fetch "https://ziglang.org/download/$ZIG_VERSION/zig-$host-$ZIG_VERSION.tar.xz" "zig-$host-$ZIG_VERSION.tar.xz" "$host_sha"
+fetch "https://ziglang.org/download/$ZIG_VERSION/zig-$ZIG_VERSION.tar.xz" "zig-$ZIG_VERSION.tar.xz" "$ZIG_SOURCE_SHA256"
+[ -d "zig-$host-$ZIG_VERSION" ] || tar xf "zig-$host-$ZIG_VERSION.tar.xz"
+[ -d "zig-$ZIG_VERSION" ] || tar xf "zig-$ZIG_VERSION.tar.xz"
+zig="$work/zig-$host-$ZIG_VERSION/zig"
+src="$work/zig-$ZIG_VERSION"
+
+# The compiler, with only the WebAssembly backend (-Ddev=wasm): no LLVM, a
+# few MB instead of hundreds.
+(cd "$src" && "$zig" build -Dtarget=wasm32-wasi -Dcpu="$CPU" -Doptimize=ReleaseSmall -Dno-lib -Dno-langref \
+  -Ddev=wasm -Dversion-string="$ZIG_VERSION" --prefix "$work/compiler")
+cp "$work/compiler/bin/zig.wasm" "$out/zig.wasm"
+chmod 644 "$out/zig.wasm"
+
+# compiler_rt, built natively: the WebAssembly compiler cannot build it.
+"$zig" build-lib "$src/lib/compiler_rt.zig" -target wasm32-wasi -mcpu="$CPU" -O ReleaseSmall -femit-bin="$out/libcompiler_rt.a"
+rm -f "$out"/libcompiler_rt.a.o
+
+# What the compiler reads: the standard library, and ubsan_rt for Debug
+# builds. ustar, which the worker's tar reader understands.
+tar --format=ustar -czf "$out/lib.tar.gz" -C "$src/lib" std ubsan_rt.zig
+
+# The worker, bundled with the WASI shim into one classic worker script.
+cp "$here/package.json" "$here/worker.js" "$work/"
+if [ -f "$here/package-lock.json" ]; then
+  cp "$here/package-lock.json" "$work/"
+  npm ci --no-audit --no-fund
+else
+  npm install --no-audit --no-fund
+  cp package-lock.json "$here/"
+fi
+npx esbuild worker.js --bundle --minify --format=iife --target=es2020 --legal-comments=eof --outfile="$out/worker.js"
+
+{
+  printf '== Zig %s ==\n\n%s\n\n' "$ZIG_VERSION" "$(cat "$src/LICENSE")"
+  printf '== @bjorn3/browser_wasi_shim ==\n\n%s\n' "$(cat node_modules/@bjorn3/browser_wasi_shim/LICENSE-MIT)"
+} > "$out/LICENSES.txt"
+
+echo "$inputs" > "$out/.stamp"
+ls -l "$out"

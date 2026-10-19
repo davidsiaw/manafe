@@ -37,7 +37,7 @@ Answering a multiple choice question posts `{choice, round}`. A correct answer r
 
 For `type: "code"`, `ProblemView` shows a `CodeEditor` holding the problem's `starter_code` instead of radio buttons, then **Run** and **Check answer**, then the output in a grey box. How programs run is in runtimes.md.
 
-- **Run** runs the program and shows what it printed, and any error. Nothing is sent to the backend.
+- **Run** runs the program and shows what it printed, and any error, in full: for a compiled language, everything the compiler said. While a runtime downloads or compiles, the output box shows what it is doing ("Downloading the Zig compiler…", "Compiling…"). Nothing is sent to the backend.
 - **Check answer** runs it too, and if it ran to the end posts `{output, round}` with its stdout. A program that failed is not sent: the learner is told to fix the error. A timeout is shown as such.
 - While a program runs, both buttons are disabled. Showing another problem abandons the run.
 - The question is reflowed like the body, so an indented line in it (the exact text to print) keeps its own line.

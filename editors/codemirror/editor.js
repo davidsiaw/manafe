@@ -21,12 +21,14 @@ import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { ruby } from "@codemirror/legacy-modes/mode/ruby";
 import { rust } from "@codemirror/legacy-modes/mode/rust";
 import { shell } from "@codemirror/legacy-modes/mode/shell";
+import { zig } from "./zig-mode.js";
 
 // Syntax highlighting per problem language; unknown languages get none.
 const LANGUAGES = {
     ruby: () => StreamLanguage.define(ruby),
     rust: () => StreamLanguage.define(rust),
-    shell: () => StreamLanguage.define(shell)
+    shell: () => StreamLanguage.define(shell),
+    zig: () => StreamLanguage.define(zig)
 };
 
 const theme = EditorView.theme({

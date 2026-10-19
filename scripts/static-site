@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# Builds the app as a static site in site/, ready for any static host (GitHub
+# Pages first): the release build, without what a browser never loads. All
+# paths in it are relative, and routing is in the URL's #, so it works from
+# any directory, such as https://<user>.github.io/<repo>/.
+#
+#   API_BASE_URL=https://backend.example/api/v1 scripts/static-site
+#
+# API_BASE_URL is baked into the site (Config.j.erb), so build once per
+# backend. See docs/deployment.md.
+
+set -uo pipefail
+cd "$(dirname "$0")/.."
+
+if [ -z "${API_BASE_URL:-}" ]; then
+  # Empty counts as unset: Config.j.erb would otherwise bake in "".
+  unset API_BASE_URL
+  echo "static-site: API_BASE_URL is not set; the site will call http://localhost:3000/api/v1" >&2
+fi
+
+# Before building: chino compiles every .j file in the tree, a previous
+# site/ included.
+rm -rf site
+scripts/build || exit 1
+cp -R build site
+
+# Never fetched by a browser: the frameworks' debug builds, the CommonJS
+# (Node) builds the compiler uses, and AppKit's old Aristo theme (the app
+# uses Aristo2). Measured from a static server's request log, using the
+# course menu, a course, code problems in each runtime and My progress.
+rm -rf site/Frameworks/Debug site/Frameworks/AppKit/Resources/Aristo.blend
+find site -type d -name CommonJS.environment -prune -exec rm -rf {} +
+find site -name '.*' -not -name . -prune -exec rm -rf {} +
+# Objective-J sources: the app is compiled into Browser.environment, and the
+# Chino framework's sources are not used. Without them a leftover site/
+# cannot break the next build.
+find site -name '*.j' -delete
+
+echo "static-site: $(du -sh site | cut -f1) in site/"

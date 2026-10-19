@@ -1,0 +1,80 @@
+---
+# Builds the app as a static site (scripts/static-site) and uploads it as a
+# GitHub Pages artifact, ready for a deploy job (actions/deploy-pages) once
+# Pages is set up. Until then, download it from the run's page to try it.
+# See docs/deployment.md.
+name: static-site
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: static-site-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  static-site:
+    runs-on: ubuntu-26.04
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build dev image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          tags: chino-dev
+          load: true
+          cache-from: type=gha,scope=chino-dev
+          cache-to: type=gha,scope=chino-dev,mode=max
+
+      - name: Cache the Zig runtime's downloads and build
+        uses: actions/cache@v4
+        with:
+          path: .zig-build
+          key: zig-runtime-${{ hashFiles('runtimes/zig/**') }}
+          restore-keys: zig-runtime-
+
+      # Resources/runtimes/zig is not committed; build it into the checkout.
+      - name: Build the Zig runtime
+        run: |
+          docker run --rm \
+            -v "$PWD:/app" \
+            -e HOME=/tmp \
+            -e WORK_DIR=/app/.zig-build \
+            -u "$(id -u)" \
+            --entrypoint=/app/runtimes/zig/build \
+            chino-dev
+
+      # The backend's URL is baked into the site: set it as the repository
+      # variable API_BASE_URL (Settings > Secrets and variables > Actions >
+      # Variables), for example https://api.example.com/api/v1.
+      - name: Build the static site
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "::warning::The repository variable API_BASE_URL is not set, so this site calls http://localhost:3000/api/v1."
+          fi
+          docker run --rm \
+            -v "$PWD:/app" \
+            -e HOME=/tmp \
+            -e API_BASE_URL \
+            -u "$(id -u)" \
+            --entrypoint=/app/scripts/static-site \
+            chino-dev
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+          retention-days: 7

@@ -4,12 +4,12 @@ This file is the same in `backend/docs/` and `frontend/docs/`. If you change it,
 
 ## What it is
 
-Manabase is a base system for interactive learning modules, modelled on [HDLBits](https://hdlbits.01xz.net/wiki/Andgate): a course is a tree of problems, shown as a collapsible sidebar, and each problem is a short explanation followed by an exercise. Answer it correctly and the problem is ticked. An exercise is either a multiple choice question or a program to write. Ruby programs run in the learner's browser; Rust programs run on the learner's own computer, and the learner pastes back what they printed.
+Manabase is a base system for interactive learning modules, modelled on [HDLBits](https://hdlbits.01xz.net/wiki/Andgate): a course is a tree of problems, shown as a collapsible sidebar, and each problem is a short explanation followed by an exercise. Answer it correctly and the problem is ticked. An exercise is either a multiple choice question or a program to write. Ruby and Zig programs run in the learner's browser (for Zig, the real compiler, built for WebAssembly, compiles them there); Rust programs run on the learner's own computer, and the learner pastes back what they printed.
 
 What a student can do today:
 
 - Pick a course from the course menu and work through its problems in any order.
-- Write and run Ruby programs in the browser, and check them.
+- Write and run Ruby programs, and compile and run Zig programs, in the browser, seeing everything the compiler says, and check them.
 - Set up Rust on their own computer, run the course's Rust programs there, and paste back the output to check it.
 - Use it anonymously, straight away. Progress is saved on the server against an anonymous learner.
 - Register an email and a passkey to keep that progress, and log in and out with the passkey, on any device.
@@ -59,7 +59,7 @@ These were made deliberately; change them knowingly.
 
 - **Courses are YAML on disk** in the backend repository, one file per problem, read on every request. Editing a course needs no deploy step and no restart, and diffs stay small. They are validated when loaded, and the backend's specs load every course, so a broken course fails the build.
 - **Answers are checked by the backend**, so the frontend never has the correct choice.
-- **Code runs in the browser, or on the learner's computer; the backend checks its output.** A language runtime (mruby, compiled to WebAssembly) runs the program in a Web Worker, and is downloaded only when a problem in that language is first run, so further languages cost nothing to learners who do not use them. No server has to run untrusted code. A language with no browser runtime (Rust: a compiler in the browser is tens of megabytes and not yet reliable) is run on the learner's computer instead (`run: local`). The price, either way, is that the backend trusts the output it is sent: a learner can mark a problem solved by posting the right output without a program. That is acceptable for practice, and wrong for anything graded.
+- **Code runs in the browser, or on the learner's computer; the backend checks its output.** A language runtime (mruby compiled to WebAssembly, or the Zig compiler built for WebAssembly) runs the program in a Web Worker, and is downloaded only when a problem in that language is first run, so further languages cost nothing to learners who do not use them. No server has to run untrusted code. A language with no browser runtime (Rust: a compiler in the browser is tens of megabytes and not yet reliable) is run on the learner's computer instead (`run: local`). The price, either way, is that the backend trusts the output it is sent: a learner can mark a problem solved by posting the right output without a program. That is acceptable for practice, and wrong for anything graded.
 - **Anonymous first.** A visitor can start at once. Registering keeps the same learner, so nothing is lost.
 - **Passkeys, no passwords, usernameless login.** Registration asks for an email and creates a discoverable passkey; logging in just asks the browser for any passkey for the site. There is no email confirmation and no account recovery yet.
 - **Logging in drops anonymous progress** in that browser; it is not merged into the account.

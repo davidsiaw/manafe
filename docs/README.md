@@ -14,6 +14,7 @@ Notes for whoever works on this repository next, human or agent. Read [system.md
 | [testing.md](testing.md) | You are writing or running specs and unit tests. |
 | [heighliner.md](heighliner.md) | You are running the app locally or from the pi sandbox. |
 | [ci.md](ci.md) | You are changing `.github/workflows/`. |
+| [deployment.md](deployment.md) | You are building the static site, hosting it, or setting up GitHub Pages. |
 | [roadmap.md](roadmap.md) | You want to know what is not built yet. |
 
 The backend has its own `docs/`, in `../backend/docs/`; its [api.md](../../backend/docs/api.md) describes every endpoint this app calls.

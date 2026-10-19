@@ -53,6 +53,38 @@ RSpec.describe 'Taking a course', type: :feature do
     end
   end
 
+  context 'when going to a problem in a closed section' do
+    let(:course) do
+      {
+        id: 'sample', title: 'Sample',
+        sections: [
+          { title: 'First', problems: [], sections: [
+            { title: 'Closed A', problems: [{ id: 'one', title: 'Problem one' }], sections: [] },
+            { title: 'Closed B', problems: [{ id: 'two', title: 'Problem two' }], sections: [] }
+          ] }
+        ]
+      }
+    end
+
+    before do
+      stub_course
+      MOCK_API.stub('GET', '/courses/sample/problems/two', body: problem('two', 'Problem two'))
+      MOCK_API.stub('GET', '/courses/sample/problems/one', body: problem('one', 'Problem one'))
+      visit_as_anonymous('/#/courses/sample/two')
+      wait_for_cappuccino_text('Question about two?')
+    end
+
+    # Opening the section above the selected problem used to move the
+    # selection, which the sidebar took for a click, and went back.
+    it 'stays there' do
+      page.execute_script('window.location.hash = "#/courses/sample/one"')
+      wait_for_cappuccino_text('Question about one?')
+      sleep 1
+      expect(current_url).to end_with '#/courses/sample/one'
+      expect(cappuccino_text_values).to include('Question about one?')
+    end
+  end
+
   context 'with code in the problem text' do
     before do
       stub_course

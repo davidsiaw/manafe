@@ -298,7 +298,13 @@ var MARGIN = 24.0,
     [feedbackText setText:"" language:nil];
     [self _showOutput:"Running\u2026"];
 
-    [[ProblemView codeRunner] run:[editor code] language:problem.language callback:function(aResult)
+    var progress = function(aMessage)
+    {
+        if (problem === runProblem)
+            [self _showOutput:aMessage];
+    };
+
+    [[ProblemView codeRunner] run:[editor code] language:problem.language progress:progress callback:function(aResult)
     {
         if (problem !== runProblem)
             return;

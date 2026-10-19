@@ -1,7 +1,7 @@
 FROM ruby:3.4-slim
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends build-essential nodejs npm curl \
+ && apt-get install -y --no-install-recommends build-essential nodejs npm curl xz-utils \
  && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g @objj/cappuccino@1.3.1

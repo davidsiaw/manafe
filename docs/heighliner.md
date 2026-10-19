@@ -6,6 +6,7 @@ heighliner runs the app container. It used to be called kaiser, and the `kaiser`
 
 - The environment is called `manafe` on the original machine, and the backend's `manabe`; Heighliner.config assumes the backend's name (below). On another machine, find a project's name with `heighliner init x`: in a project that is already initialised, it refuses, prints the existing name and changes nothing.
 - The app container is `<env>-app` and serves on port 4444. Through the proxy the app is at `https://<env>.<suffix>`, where `<suffix>` is whatever `heighliner show http-suffix` prints. The suffix differs between installs, so never assume one. Plain `http://` may redirect to `https://`.
+- After cloning, build the Zig runtime once, which is not committed: `heighliner login runtimes/zig/build` (about 3 minutes; afterwards it says "up to date" until its inputs change). It writes into the mounted source, so the host has it too.
 - Start it with `heighliner up -av`. `-a` mounts the project over the copy of the source in the image (`attach_mount '.', '/app'`), so chino serves the files as they are on disk: refresh the browser to see an edit, and `heighliner login rspec` tests what is on disk. Plain `heighliner up` keeps the copy from the last build, and then every edit needs another `up`. Only `Gemfile`, `tests/Gemfile` and `Dockerfile` changes need a rebuild either way.
 - The SPA reaches the backend at `API_BASE_URL`, which Heighliner.config sets to `https://manabe.<suffix>/api/v1`. That assumes `../backend` was initialised as `heighliner init manabe`. Start the backend with its own `heighliner up` first.
 - `heighliner login <cmd>` runs a command inside `<env>-app`. `/app/scripts` is on PATH there, so `heighliner login rspec`, `heighliner login ojtest` and `heighliner login build` all work. When you call these from a script, redirect stdin from `/dev/null`.
@@ -17,6 +18,9 @@ heighliner renders `app_params`, the database strings and the Dockerfile with `E
 The Dockerfile deliberately contains no ERB, because CI builds it with plain `docker buildx`.
 
 ## Known noise and flakes
+
+- `heighliner login` prints a command's output only when it finishes, so a long one (the Zig runtime build) looks stuck. Watch its files instead (`.zig-build/` for that build).
+- A backgrounded `heighliner up -av` stays attached to the container: if the process that started it is killed, the container stops ("Gracefully stopping" in the logs). Start it with `setsid nohup heighliner up -av ... &` from scripts.
 
 - Every command prints `fatal: detected dubious ownership in repository`. The message comes from git on the spice server and is harmless; the branch name still resolves.
 - `heighliner up` sometimes fails with `- exited with code 125` on the final `docker run`, when it is replacing a running container. Running `up` again has fixed it every time so far. `heighliner up -v` prints more detail.

@@ -14,12 +14,14 @@
     status "timeout". The clock starts when the program starts, not while the
     runtime is downloading.
 
-    The callback gets { status, stdout, stderr, truncated } (CodeRun.j).
+    The callback gets { status, stdout, stderr, truncated } (CodeRun.j). A
+    runtime that takes a while to load or compile reports what it is doing,
+    and the progress function, if there is one, gets each message.
 */
 @implementation CodeRunner : CPObject
 {
     Object      workers;    // language -> Worker
-    Object      current;    // the run in progress: { id, language, callback, timer }
+    Object      current;    // the run in progress: { id, language, callback, progress, timer }
     int         lastId;
 }
 
@@ -35,13 +37,18 @@
 
 - (void)run:(CPString)aCode language:(CPString)aLanguage callback:(Function)aCallback
 {
+    [self run:aCode language:aLanguage progress:nil callback:aCallback];
+}
+
+- (void)run:(CPString)aCode language:(CPString)aLanguage progress:(Function)aProgress callback:(Function)aCallback
+{
     [self stop];
 
     var worker = [self _workerFor:aLanguage];
     if (!worker)
         return [self _finish:aCallback result:{ status: "unavailable" }];
 
-    current = { id: ++lastId, language: aLanguage, callback: aCallback, timer: nil };
+    current = { id: ++lastId, language: aLanguage, callback: aCallback, progress: aProgress, timer: nil };
     worker.postMessage({ id: current.id, code: aCode });
 }
 
@@ -106,7 +113,15 @@
     if (!current || aMessage.id !== current.id)
         return;
 
-    if (aMessage.type === "started")
+    if (aMessage.type === "progress")
+    {
+        if (current.progress)
+        {
+            current.progress(aMessage.message);
+            [[CPRunLoop currentRunLoop] limitDateForMode:CPDefaultRunLoopMode];
+        }
+    }
+    else if (aMessage.type === "started")
     {
         current.timer = window.setTimeout(function()
         {

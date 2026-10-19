@@ -1,7 +1,25 @@
+# Build outputs (scripts/build, scripts/static-site; chino's temp/)
 /build/
+/site/
 /temp/
-/vendor/
-/.bundle/
+# scripts/build moves tests/ here while it runs; left behind only if killed
+/.tests-stashed-by-build/
+
+# The Zig runtime is built, not committed (docs/runtimes.md), and CI's
+# download and build cache for it
+/Resources/runtimes/zig/
+/.zig-build/
+
+# Bundler, here and for tests/Gemfile
+.bundle/
+vendor/
+
+# The build scripts install npm packages in their work directories; this is
+# for an npm install run by hand next to a package.json
+node_modules/
+
+# Agent sessions and indexes
 /.pi-sessions/
 /.pirag/
-/.tests-stashed-by-build/
+
+.DS_Store
