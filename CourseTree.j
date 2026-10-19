@@ -19,6 +19,36 @@
     return problemId != nil;
 }
 
+// A section is solved when it has problems and every one under it is solved.
+- (BOOL)isSolved
+{
+    if ([self isProblem])
+        return solved;
+    var total = [self problemCount];
+    return total > 0 && [self solvedProblemCount] == total;
+}
+
+// Problems in this node and below: 1 for a problem.
+- (int)problemCount
+{
+    if ([self isProblem])
+        return 1;
+    var count = 0;
+    for (var i = 0; i < children.length; i++)
+        count += [children[i] problemCount];
+    return count;
+}
+
+- (int)solvedProblemCount
+{
+    if ([self isProblem])
+        return solved ? 1 : 0;
+    var count = 0;
+    for (var i = 0; i < children.length; i++)
+        count += [children[i] solvedProblemCount];
+    return count;
+}
+
 @end
 
 /*
@@ -157,4 +187,23 @@ function CourseTreeProblemLabel(aTitle, isSolved, aTimesSolved, isRevision)
     var mark = isSolved ? "\u2713 " : "\u25CB ",
         showCount = aTimesSolved >= 2 || (isRevision && aTimesSolved >= 1);
     return mark + aTitle + (showCount ? "  \u00D7" + aTimesSolved : "");
+}
+
+/*
+    A section's row: ticked when every problem under it is solved in the
+    round being shown, then how many of them are.
+*/
+function CourseTreeSectionLabel(aTitle, aSolvedCount, aProblemCount)
+{
+    var mark = aProblemCount > 0 && aSolvedCount == aProblemCount ? "\u2713 " : "\u25CB ";
+    return mark + aTitle + "  " + aSolvedCount + "/" + aProblemCount;
+}
+
+// [mark, rest] of a row label, so that the sidebar can colour the mark.
+function CourseTreeSplitMark(aLabel)
+{
+    var first = aLabel.charAt(0);
+    if ((first == "\u2713" || first == "\u25CB") && aLabel.charAt(1) == " ")
+        return [first, aLabel.substring(2)];
+    return ["", aLabel];
 }

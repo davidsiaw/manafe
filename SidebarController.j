@@ -3,6 +3,77 @@
 
 @import "CourseTree.j"
 
+var SidebarRowInset = 3.0,
+    SidebarRowMarkWidth = 16.0;
+
+/*
+    A row of the tree: the mark in a field of its own, so that a tick can be
+    green, then the rest of the label. Takes the label from the data source
+    as its object value. Passes the selected state on to its fields, so that
+    both turn white on the selection.
+*/
+@implementation SidebarRowView : CPView
+{
+    CPTextField _mark;
+    CPTextField _text;
+    CPString    _label;
+}
+
+- (id)initWithFrame:(CGRect)aFrame
+{
+    if (self = [super initWithFrame:aFrame])
+    {
+        var height = CGRectGetHeight(aFrame);
+        _mark = [self _fieldWithFrame:CGRectMake(SidebarRowInset, 0, SidebarRowMarkWidth, height)];
+        var textX = SidebarRowInset + SidebarRowMarkWidth;
+        _text = [self _fieldWithFrame:CGRectMake(textX, 0, CGRectGetWidth(aFrame) - textX, height)];
+        [_text setAutoresizingMask:CPViewWidthSizable];
+        [_text setLineBreakMode:CPLineBreakByTruncatingTail];
+    }
+    return self;
+}
+
+- (CPTextField)_fieldWithFrame:(CGRect)aFrame
+{
+    var field = [[CPTextField alloc] initWithFrame:aFrame];
+    [field setEditable:NO];
+    [field setBezeled:NO];
+    [field setDrawsBackground:NO];
+    [field setVerticalAlignment:CPCenterVerticalTextAlignment];
+    [self addSubview:field];
+    return field;
+}
+
+- (id)objectValue
+{
+    return _label;
+}
+
+- (void)setObjectValue:(id)aValue
+{
+    _label = aValue;
+    var parts = CourseTreeSplitMark(String(aValue || ""));
+    [_mark setStringValue:parts[0]];
+    [_mark setTextColor:parts[0] == "\u2713" ? [CPColor colorWithHexString:"2E9E44"] : [CPColor grayColor]];
+    [_text setStringValue:parts[1]];
+}
+
+- (BOOL)setThemeState:(ThemeState)aState
+{
+    [_mark setThemeState:aState];
+    [_text setThemeState:aState];
+    return [super setThemeState:aState];
+}
+
+- (BOOL)unsetThemeState:(ThemeState)aState
+{
+    [_mark unsetThemeState:aState];
+    [_text unsetThemeState:aState];
+    return [super unsetThemeState:aState];
+}
+
+@end
+
 /*
     The collapsible problem tree on the left. Tells its delegate when the
     student picks a problem with -sidebar:didSelectProblemId:.
@@ -107,11 +178,17 @@
 - (id)outlineView:(CPOutlineView)anOutlineView objectValueForTableColumn:(CPTableColumn)aColumn byItem:(id)anItem
 {
     if (![anItem isProblem])
-        return [anItem title];
+        return CourseTreeSectionLabel([anItem title], [anItem solvedProblemCount], [anItem problemCount]);
     return CourseTreeProblemLabel([anItem title], [anItem isSolved], [anItem timesSolved], revisionMode);
 }
 
 // CPOutlineView delegate
+
+- (CPView)outlineView:(CPOutlineView)anOutlineView viewForTableColumn:(CPTableColumn)aColumn item:(id)anItem
+{
+    // Not makeViewWithIdentifier:, which looks for a cib of that name first.
+    return [[SidebarRowView alloc] initWithFrame:CGRectMake(0, 0, [aColumn width], [anOutlineView rowHeight])];
+}
 
 - (BOOL)outlineView:(CPOutlineView)anOutlineView shouldSelectItem:(id)anItem
 {

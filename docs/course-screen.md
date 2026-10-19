@@ -14,6 +14,8 @@ A problem is fetched when it is shown (`GET .../problems/<pid>`, with `?round=N`
 
 - Sections are rows that open and close when clicked; they cannot be selected. Top-level sections start open, and the sections around the current problem are opened.
 - A problem's row is `CourseTreeProblemLabel(title, solved, timesSolved, revisionMode)`: a tick (✓) or circle (○) for the round being shown, then "×N", the number of rounds it has been solved in. The count shows from two on; in revision mode also at one, which marks what was solved before.
+- A section's row is `CourseTreeSectionLabel(title, solved, total)`: a tick when every problem under it, subsections included, is solved in the round shown (an empty section never is), then "2/5", how many of them are.
+- Rows are views (`SidebarRowView`): the mark is in a field of its own, so that a tick is green and a circle grey. The data source still returns the whole label as a string, which the row splits with `CourseTreeSplitMark`, and which the spec helpers read.
 - Selecting a row changes the URL; the controller then selects it programmatically, guarded so that this does not loop.
 
 `CourseTree` orders problems as the backend does: a section's own problems before its subsections'.

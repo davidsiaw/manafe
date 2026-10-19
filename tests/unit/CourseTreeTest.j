@@ -87,6 +87,49 @@
     [OJAssert assertTrue:[tree applyProgress:progress revisionMode:NO]];
 }
 
+- (void)testSectionsCountTheProblemsUnderThem
+{
+    var first = [tree rootNodes][0],
+        nested = [first children][1];
+    [tree markSolved:["two"]];
+    [OJAssert assert:2 equals:[first problemCount]];
+    [OJAssert assert:1 equals:[first solvedProblemCount]];
+    [OJAssert assert:1 equals:[nested solvedProblemCount]];
+}
+
+- (void)testASectionIsSolvedWhenEverythingUnderItIs
+{
+    var first = [tree rootNodes][0],
+        nested = [first children][1];
+    [tree markSolved:["two"]];
+    [OJAssert assertTrue:[nested isSolved]];
+    [OJAssert assertFalse:[first isSolved]];
+
+    [tree markSolved:["one"]];
+    [OJAssert assertTrue:[first isSolved]];
+}
+
+- (void)testAnEmptySectionIsNotSolved
+{
+    var empty = [[[CourseTree alloc] initWithJSON:{
+        title: "Empty", sections: [{ title: "Nothing", problems: [], sections: [] }]
+    }] rootNodes][0];
+    [OJAssert assertFalse:[empty isSolved]];
+}
+
+- (void)testSectionLabels
+{
+    [OJAssert assert:"\u25CB Basics  1/3" equals:CourseTreeSectionLabel("Basics", 1, 3)];
+    [OJAssert assert:"\u2713 Basics  3/3" equals:CourseTreeSectionLabel("Basics", 3, 3)];
+}
+
+- (void)testSplitsTheMarkFromALabel
+{
+    [OJAssert assert:["\u2713", "Ints  \u00D73"] equals:CourseTreeSplitMark("\u2713 Ints  \u00D73")];
+    [OJAssert assert:["\u25CB", "Basics  1/3"] equals:CourseTreeSplitMark("\u25CB Basics  1/3")];
+    [OJAssert assert:["", "Plain"] equals:CourseTreeSplitMark("Plain")];
+}
+
 - (void)testProblemLabels
 {
     [OJAssert assert:"\u25CB Ints" equals:CourseTreeProblemLabel("Ints", NO, 0, NO)];

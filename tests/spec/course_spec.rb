@@ -48,7 +48,8 @@ RSpec.describe 'Taking a course', type: :feature do
 
     it 'shows the tree with unsolved marks and opens the first problem' do
       wait_for_cappuccino_text('Question about one?')
-      expect(cappuccino_outline_rows).to eq ['First', "\u25CB Problem one", 'Nested', 'Second', "\u25CB Problem three"]
+      expect(cappuccino_outline_rows).to eq ["\u25CB First  0/2", "\u25CB Problem one", "\u25CB Nested  0/1",
+                                             "\u25CB Second  0/1", "\u25CB Problem three"]
       expect(current_url).to end_with '#/courses/sample/one'
     end
   end
@@ -127,6 +128,7 @@ RSpec.describe 'Taking a course', type: :feature do
       click_cappuccino_button('Check answer')
 
       wait_for_cappuccino_outline_row("\u2713 Problem one")
+      expect(cappuccino_outline_rows).to include("\u25CB First  1/2")
       wait_for_cappuccino_text('Correct! Because.')
       answer = MOCK_API.requests_to('POST', '/courses/sample/problems/one/answer').first
       expect([answer.body, answer.headers['Authorization']])
@@ -155,6 +157,15 @@ RSpec.describe 'Taking a course', type: :feature do
       wait_for_cappuccino_text('Question about two?')
       expect(cappuccino_outline_rows).to include("\u2713 Problem one", "\u25CB Problem two")
       expect(MOCK_API.requests_to('POST', '/learners')).to be_empty
+    end
+
+    it 'ticks a section when everything in it is solved, subsections included' do
+      stub_course(solved: %w[two three])
+      MOCK_API.stub('GET', '/courses/sample/problems/one', body: problem('one', 'Problem one'))
+      visit_as_anonymous('/#/courses/sample')
+
+      wait_for_cappuccino_text('Question about one?')
+      expect(cappuccino_outline_rows).to include("\u25CB First  1/2", "\u2713 Nested  1/1", "\u2713 Second  1/1")
     end
 
     it 'starts over as a new anonymous learner when the server no longer knows the session' do
@@ -205,7 +216,7 @@ RSpec.describe 'Taking a course', type: :feature do
 
       click_cappuccino_button("Problem two \u2192")
       wait_for_cappuccino_text('Question about two?')
-      expect(cappuccino_outline_rows).to include('Nested', "\u25CB Problem two")
+      expect(cappuccino_outline_rows).to include("\u25CB Nested  0/1", "\u25CB Problem two")
       expect(current_url).to end_with '#/courses/sample/two'
     end
   end
