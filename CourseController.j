@@ -68,7 +68,9 @@ var SIDEBAR_WIDTH = 260.0,
         [splitView setAutoresizingMask:CPViewWidthSizable | CPViewHeightSizable];
 
         [splitView addSubview:[self _leftColumnWithHeight:CGRectGetHeight(aFrame)]];
-        [splitView addSubview:[self _problemColumnWithFrame:CGRectMake(0, 0, CGRectGetWidth(aFrame) - SIDEBAR_WIDTH, CGRectGetHeight(aFrame))]];
+        // At x = SIDEBAR_WIDTH so that its right edge is the split view's:
+        // setPosition: below keeps that edge and moves only the left one.
+        [splitView addSubview:[self _problemColumnWithFrame:CGRectMake(SIDEBAR_WIDTH, 0, CGRectGetWidth(aFrame) - SIDEBAR_WIDTH, CGRectGetHeight(aFrame))]];
         [splitView setPosition:SIDEBAR_WIDTH ofDividerAtIndex:0];
         view = splitView;
 

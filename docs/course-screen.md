@@ -22,7 +22,7 @@ A problem is fetched when it is shown (`GET .../problems/<pid>`, with `?round=N`
 
 ## The problem
 
-`ProblemView` stacks, top to bottom: the title (green with a ✓ when solved in this round), previous and next buttons (titled with those problems' names), the body, the question, a radio button per choice, "Check answer", and feedback. It lays itself out in `-layoutSubviews`, measures wrapped text with `sizeWithFont:inWidth:`, keeps text at most 760 pixels wide, and grows so that its scroll view can scroll.
+`ProblemView` stacks, top to bottom: the title (green with a ✓ when solved in this round), previous and next buttons (titled with those problems' names), the body, the question, a radio button per choice, "Check answer", and feedback. It lays itself out in `-layoutSubviews`, measures wrapped text with `sizeWithFont:inWidth:`, uses the full width of the pane, and grows so that its scroll view can scroll.
 
 Problem text is plain, written in YAML with line breaks wherever the author wrapped. `TextFormatBlocks` (TextFormat.j) splits it into prose and code:
 

@@ -9,7 +9,7 @@
 var SharedCodeRunner = nil;
 
 var MARGIN = 24.0,
-    MAX_TEXT_WIDTH = 760.0,
+    INITIAL_WIDTH = 760.0,
     GAP = 14.0,
     BUTTON_HEIGHT = 24.0,
     RADIO_HEIGHT = 22.0,
@@ -69,7 +69,7 @@ var MARGIN = 24.0,
         questionText = [self _richTextWithFont:[CPFont boldSystemFontOfSize:14.0]];
         feedbackText = [self _richTextWithFont:[CPFont systemFontOfSize:14.0]];
 
-        editor = [[CodeEditor alloc] initWithFrame:CGRectMake(0, 0, MAX_TEXT_WIDTH, EDITOR_HEIGHT)];
+        editor = [[CodeEditor alloc] initWithFrame:CGRectMake(0, 0, INITIAL_WIDTH, EDITOR_HEIGHT)];
         [self addSubview:editor];
         // A label draws no background, so the output sits on a box.
         outputBox = [[CPView alloc] initWithFrame:CGRectMakeZero()];
@@ -80,7 +80,7 @@ var MARGIN = 24.0,
 
         pasteLabel = [self _labelWithFont:[CPFont boldSystemFontOfSize:14.0]];
         [pasteLabel setStringValue:"What your program printed:"];
-        pasteEditor = [[CodeEditor alloc] initWithFrame:CGRectMake(0, 0, MAX_TEXT_WIDTH, PASTE_HEIGHT) plain:YES];
+        pasteEditor = [[CodeEditor alloc] initWithFrame:CGRectMake(0, 0, INITIAL_WIDTH, PASTE_HEIGHT) plain:YES];
         [self addSubview:pasteEditor];
 
         previousButton = [self _buttonWithAction:@selector(goPrevious:)];
@@ -359,7 +359,7 @@ var MARGIN = 24.0,
     if (!problem)
         return;
 
-    var width = MIN(MAX(CGRectGetWidth([self bounds]) - 2 * MARGIN, 100.0), MAX_TEXT_WIDTH),
+    var width = MAX(CGRectGetWidth([self bounds]) - 2 * MARGIN, 100.0),
         y = MARGIN;
 
     y = [self _place:titleField at:y width:width] + 4.0;
