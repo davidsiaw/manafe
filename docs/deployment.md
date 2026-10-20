@@ -30,7 +30,7 @@ The backend must be told about the site's address (backend development.md):
 
 `.github/workflows/static-site.yml` runs on pull requests, on pushes to `master` and by hand (`workflow_dispatch`). It builds the dev image, builds the Zig runtime (cached, as in ci.md), runs `scripts/static-site` in the image, and uploads `site/` with `actions/upload-pages-artifact`. The artifact, `github-pages`, is a tar of the site, kept for 7 days and downloadable from the run's page. On `master` the `deploy` job then publishes it with `actions/deploy-pages`.
 
-The backend URL comes from the repository variable `API_BASE_URL` (Settings > Secrets and variables > Actions > Variables). Without it the run still succeeds, with a warning, and the site calls localhost.
+The backend URL, `https://manabase.astrobunny.net/api/v1`, is set in the workflow.
 
 ## GitHub Pages setup
 
@@ -39,6 +39,6 @@ Done once, for https://manafe.astrobunny.net:
 1. Settings > Pages > Source: GitHub Actions.
 2. DNS: a `CNAME` record from `manafe.astrobunny.net` to `davidsiaw.github.io`.
 3. Settings > Pages > Custom domain: `manafe.astrobunny.net`, then Enforce HTTPS once the certificate is issued. A deploy from Actions ignores `CNAME` files, so the domain lives only in this setting.
-4. Set `API_BASE_URL`, and configure the backend as above. The mobile frontend is at https://manamo.astrobunny.net, so the backend's `FRONTEND_HOSTS` is `https://manafe.astrobunny.net,https://manamo.astrobunny.net` and `WEBAUTHN_RP_ID` is `astrobunny.net`.
+4. Configure the backend (https://manabase.astrobunny.net) as above. The mobile frontend is at https://manamo.astrobunny.net, so the backend's `FRONTEND_HOSTS` is `https://manafe.astrobunny.net,https://manamo.astrobunny.net` and `WEBAUTHN_RP_ID` is `astrobunny.net`.
 
 Pages deployed from an artifact are not processed by Jekyll, so no `.nojekyll` file is needed.

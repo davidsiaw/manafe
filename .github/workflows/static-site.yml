@@ -54,16 +54,11 @@ jobs:
             --entrypoint=/app/runtimes/zig/build \
             chino-dev
 
-      # The backend's URL is baked into the site: set it as the repository
-      # variable API_BASE_URL (Settings > Secrets and variables > Actions >
-      # Variables), for example https://api.example.com/api/v1.
+      # The backend's URL is baked into the site.
       - name: Build the static site
         env:
-          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          API_BASE_URL: https://manabase.astrobunny.net/api/v1
         run: |
-          if [ -z "$API_BASE_URL" ]; then
-            echo "::warning::The repository variable API_BASE_URL is not set, so this site calls http://localhost:3000/api/v1."
-          fi
           docker run --rm \
             -v "$PWD:/app" \
             -e HOME=/tmp \
