@@ -36,7 +36,7 @@ The frontend holds no data and no rules: courses, correct answers, accounts and 
 
 - JSON over HTTPS, under `/api/v1`. The frontend's base URL comes from `API_BASE_URL` (frontend `Config.j.erb`).
 - Every learner, anonymous or registered, has a session token. The frontend keeps it in `localStorage` and sends `Authorization: Bearer <token>`. The backend stores only a SHA-256 digest of it.
-- CORS: the backend allows `FRONTEND_HOST`, or any origin when unset (the dev default).
+- CORS: the backend allows the origins in `FRONTEND_HOSTS` (comma separated), or any origin when unset (the dev default).
 - Passkeys belong to the frontend's site, because that is the page the browser runs them on. The backend is told that site with `WEBAUTHN_ORIGINS` and `WEBAUTHN_RP_ID`.
 
 ## Words

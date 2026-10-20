@@ -59,4 +59,4 @@ The backend sends WebAuthn options as JSON with binary fields in base64url, and 
 
 The newer `PublicKeyCredential.parseCreationOptionsFromJSON` and `credential.toJSON()` would replace most of this, but are not in every browser yet.
 
-Passkeys only work on HTTPS or `localhost`, and on a domain name, not an IP address. They belong to the frontend's host: the backend's `WEBAUTHN_RP_ID` must match it.
+Passkeys only work on HTTPS or `localhost`, and on a domain name, not an IP address. They belong to the backend's `WEBAUTHN_RP_ID`, which must be the frontend's host or a parent domain of it. In development it is the parent, `<suffix>`, so that the mobile site (`../mobile`) shares them (backend accounts.md).

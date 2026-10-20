@@ -1,6 +1,6 @@
 # Deployment: the static site
 
-The app is a static site: files, no server-side code. `scripts/static-site` builds it into `site/`, and the `static-site` workflow builds it on GitHub and uploads it as a GitHub Pages artifact. Nothing deploys it yet.
+The app is a static site: files, no server-side code. `scripts/static-site` builds it into `site/`, and the `static-site` workflow builds it on GitHub and deploys it to GitHub Pages at https://manafe.astrobunny.net.
 
 ## Building it
 
@@ -23,35 +23,22 @@ Any static host works:
 
 The backend must be told about the site's address (backend development.md):
 
-- `FRONTEND_HOST`: the site's origin, for CORS, for example `https://<owner>.github.io`.
+- `FRONTEND_HOSTS`: the sites' origins, comma separated, for CORS, for example `https://manafe.astrobunny.net,https://manamo.astrobunny.net`.
 - `WEBAUTHN_ORIGINS` and `WEBAUTHN_RP_ID`: passkeys belong to the site's domain (system.md). For a GitHub Pages project site the domain is `<owner>.github.io`, which every Pages site of that owner shares; a custom domain gives the site passkeys of its own.
 
 ## The workflow
 
-`.github/workflows/static-site.yml` runs on pull requests, on pushes to `master` and by hand (`workflow_dispatch`). It builds the dev image, builds the Zig runtime (cached, as in ci.md), runs `scripts/static-site` in the image, and uploads `site/` with `actions/upload-pages-artifact`. The artifact, `github-pages`, is a tar of the site, kept for 7 days and downloadable from the run's page.
+`.github/workflows/static-site.yml` runs on pull requests, on pushes to `master` and by hand (`workflow_dispatch`). It builds the dev image, builds the Zig runtime (cached, as in ci.md), runs `scripts/static-site` in the image, and uploads `site/` with `actions/upload-pages-artifact`. The artifact, `github-pages`, is a tar of the site, kept for 7 days and downloadable from the run's page. On `master` the `deploy` job then publishes it with `actions/deploy-pages`.
 
 The backend URL comes from the repository variable `API_BASE_URL` (Settings > Secrets and variables > Actions > Variables). Without it the run still succeeds, with a warning, and the site calls localhost.
 
-## Turning on GitHub Pages later
+## GitHub Pages setup
+
+Done once, for https://manafe.astrobunny.net:
 
 1. Settings > Pages > Source: GitHub Actions.
-2. Set `API_BASE_URL`, and configure the backend as above.
-3. Add a deploy job to the workflow, run only for `master`:
-
-```yaml
-  deploy:
-    needs: static-site
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-26.04
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
-```
+2. DNS: a `CNAME` record from `manafe.astrobunny.net` to `davidsiaw.github.io`.
+3. Settings > Pages > Custom domain: `manafe.astrobunny.net`, then Enforce HTTPS once the certificate is issued. A deploy from Actions ignores `CNAME` files, so the domain lives only in this setting.
+4. Set `API_BASE_URL`, and configure the backend as above. The mobile frontend is at https://manamo.astrobunny.net, so the backend's `FRONTEND_HOSTS` is `https://manafe.astrobunny.net,https://manamo.astrobunny.net` and `WEBAUTHN_RP_ID` is `astrobunny.net`.
 
 Pages deployed from an artifact are not processed by Jekyll, so no `.nojekyll` file is needed.

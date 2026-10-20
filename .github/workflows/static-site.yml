@@ -1,8 +1,7 @@
 ---
-# Builds the app as a static site (scripts/static-site) and uploads it as a
-# GitHub Pages artifact, ready for a deploy job (actions/deploy-pages) once
-# Pages is set up. Until then, download it from the run's page to try it.
-# See docs/deployment.md.
+# Builds the app as a static site (scripts/static-site) and, on master,
+# deploys it to GitHub Pages (https://manafe.astrobunny.net). See
+# docs/deployment.md.
 name: static-site
 on:
   pull_request:
@@ -78,3 +77,17 @@ jobs:
         with:
           path: site
           retention-days: 7
+
+  deploy:
+    needs: static-site
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-26.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
